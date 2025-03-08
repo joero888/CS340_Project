@@ -1,41 +1,42 @@
 <nav>
-    <a href="/">Manage Books</a> |
-    <a href="/genres">Manage Genres</a> |
-    <a href="/authors">Manage Authors</a> |
-    <a href="/borrowers">Manage Borrowers</a> |
-    <a href="/loans">Manage Loans</a>
+    <a href="/">MAIN</a>
+    <a href="/books">BOOKS</a> 
+    <a href="/genres">GENRES</a> |
+    <a href="/authors">AUTHORS</a> |
+    <a href="/borrowers">BORROWERS</a> |
+    <a href="/loans">LOANS</a>
 </nav>
 
-<h1>Manage Genres</h1>
+<h1>Authors</h1>
 
 <!-- Table to Display Genres -->
 <table>
     <thead>
         <tr>
-            <th>Genre ID</th>
-            <th>Genre Name</th>
+            <th>Author ID</th>
+            <th>Author Name</th>
             <th>Delete</th>
         </tr>
     </thead>
     <tbody>
         {{#each data}}
-        <tr id="row-{{this.genreID}}">
-            <td>{{this.genreID}}</td>
-            <td>{{this.genreName}}</td>
+        <tr id="row-{{this.authorID}}">
+            <td>{{this.authorID}}</td>
+            <td>{{this.authorName}}</td>
             <td>
-                <button class="delete-button" data-genreid="{{this.genreID}}">Delete</button>
+                <button class="delete-button" data-authorid="{{this.authorID}}">Delete</button>
             </td>
         </tr>
         {{/each}}
     </tbody>
 </table>
 
-<!-- Form to Add a New Genre -->
-<h2>Add a New Genre</h2>
-<form id="add-genre-form">
-    <label>Genre Name:</label>
-    <input type="text" name="genreName" required>
+<!-- Form to Add a New Author -->
+<h2>Add a New Author</h2>
+<form id="add-author-form">
+    <label>Author Name:</label>
+    <input type="text" name="authorName" required>
     <input type="submit" value="Submit">
 </form>
 
-<script src="./js/genres.js"></script>
+<script src="./js/authors.js"></script>

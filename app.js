@@ -159,7 +159,7 @@ app.get('/genres', function(req, res) {
     });
 });
 
-// Create Genre
+// Create Genre and Insert into Database
 app.post('/add-genre-ajax', function(req, res) {
     let data = req.body;
 
@@ -182,7 +182,7 @@ app.post('/add-genre-ajax', function(req, res) {
     });
 });
 
-
+// DELETE Genre
 app.delete('/delete-genre/:id', async (req, res) => {
     const genreID = req.params.id;
 
@@ -195,7 +195,115 @@ app.delete('/delete-genre/:id', async (req, res) => {
     }
 });
 
+// READ Authors
+app.get('/authors', function(req, res) {
+    let query = "SELECT * FROM Authors;";  // Query to get all authors
 
+    db.pool.query(query, function(error, authors) {
+        if (error) {
+            console.error("Database query error:", error);
+            return res.sendStatus(500);
+        }
+
+        console.log("Authors Data Retrieved:", authors);  // Log retrieved authors
+        return res.render('authors', { data: authors });  // Render authors.hbs
+    });
+});
+
+// Create Author and Insert into Database
+app.post('/add-author', function(req, res) {
+    let data = req.body;
+
+    let query = `INSERT INTO Authors (authorName) VALUES (?)`;
+    db.pool.query(query, [data.authorName], function(error, result) {
+        if (error) {
+            console.error(error);
+            return res.sendStatus(400);
+        }
+
+        // Fetch the newly inserted author
+        let selectQuery = `SELECT * FROM Authors WHERE authorID = ?;`;
+        db.pool.query(selectQuery, [result.insertId], function(error, rows) {
+            if (error) {
+                console.error(error);
+                return res.sendStatus(400);
+            }
+            res.json(rows[0]); // Send the newly added author back to the frontend
+        });
+    });
+});
+
+// DELETE Author
+app.delete('/delete-author/:id', async (req, res) => {
+    const authorID = req.params.id;
+
+    try {
+        await db.pool.query("DELETE FROM Authors WHERE authorID = ?", [authorID]);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("Error deleting author:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// READ Borrowers
+app.get('/borrowers', function(req, res) {
+    let query = "SELECT * FROM Borrowers;";  // Query to get all borrowers
+
+    db.pool.query(query, function(error, borrowers) {
+        if (error) {
+            console.error("Database query error:", error);
+            return res.sendStatus(500);
+        }
+
+        console.log("Borrowers Data Retrieved:", borrowers);  // Log retrieved borrowers
+        return res.render('borrowers', { data: borrowers });  // Render borrowers.hbs
+    });
+});
+
+// Create Borrowers and Insert into Database
+app.post('/add-borrower', function(req, res) {
+    let data = req.body;
+    console.log("📌 Received Borrower Data:", data);  // ✅ Debug Log
+
+    if (!data.borrowerName || !data.borrowerEmail) {
+        console.error("❌ Missing borrowerName or borrowerEmail:", data);
+        return res.status(400).json({ error: "Borrower name and email cannot be empty" });
+    }
+
+    let query = `INSERT INTO Borrowers (borrowerName, borrowerEmail) VALUES (?, ?)`;  
+    db.pool.query(query, [data.borrowerName, data.borrowerEmail], function(error, result) {
+        if (error) {
+            console.error("❌ Database Insert Error:", error);
+            return res.status(400).json({ error: "Database error: " + error.message });
+        }
+
+        // ✅ Fetch the newly inserted borrower
+        let selectQuery = `SELECT * FROM Borrowers WHERE borrowerID = ?;`;
+        db.pool.query(selectQuery, [result.insertId], function(error, rows) {
+            if (error) {
+                console.error("❌ Error fetching new borrower:", error);
+                return res.status(400).json({ error: "Failed to fetch borrower" });
+            }
+            console.log("✅ New Borrower Added:", rows[0]);  // ✅ Debug log
+            res.json(rows[0]);  // ✅ Send borrower data to frontend
+        });
+    });
+});
+
+
+// DELETE Borrowers
+app.delete('/delete-borrower/:id', async (req, res) => {
+    const borrowerID = req.params.id;
+
+    try {
+        await db.pool.query("DELETE FROM Borrowers WHERE borrowerID = ?", [borrowerID]);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("Error deleting borrower:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
 
 /*
     LISTENER

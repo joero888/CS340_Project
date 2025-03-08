@@ -7,36 +7,40 @@
     <a href="/loans">LOANS</a>
 </nav>
 
-<h1>Manage Genres</h1>
+<h1>Borrowers</h1>
 
-<!-- Table to Display Genres -->
+<!-- Table to Display Borrowers -->
 <table>
     <thead>
         <tr>
-            <th>Genre ID</th>
-            <th>Genre Name</th>
+            <th>Borrower ID</th>
+            <th>Borrower Name</th>
+            <th>Borrower Email</th>
             <th>Delete</th>
         </tr>
     </thead>
     <tbody>
         {{#each data}}
-        <tr id="row-{{this.genreID}}">
-            <td>{{this.genreID}}</td>
-            <td>{{this.genreName}}</td>
+        <tr id="row-{{this.borrowerID}}">
+            <td>{{this.borrowerID}}</td>
+            <td>{{this.borrowerName}}</td>
+            <td>{{this.borrowerEmail}}</td>
             <td>
-                <button class="delete-button" data-genreid="{{this.genreID}}">Delete</button>
+                <button class="delete-button" data-borrowerid="{{this.borrowerID}}">Delete</button>
             </td>
         </tr>
         {{/each}}
     </tbody>
 </table>
 
-<!-- Form to Add a New Genre -->
-<h2>Add a New Genre</h2>
-<form id="add-genre-form">
-    <label>Genre Name:</label>
-    <input type="text" name="genreName" required>
+<!-- Form to Add a New Borrower -->
+<h2>Add a New Borrower</h2>
+<form id="add-borrower-form">
+    <label>Borrower Name:</label>
+    <input type="text" name="borrowerName" required>
+    <label>Borrower Email:</label>
+    <input type="text" name="borrowerEmail" required>
     <input type="submit" value="Submit">
 </form>
 
-<script src="./js/genres.js"></script>
+<script src="./js/borrowers.js"></script>
