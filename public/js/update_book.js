@@ -1,36 +1,33 @@
-
 // Get the objects we need to modify
 let updateBookForm = document.getElementById('update-book-form-ajax');
 
 // Modify the objects we need
 updateBookForm.addEventListener("submit", function (e) {
-   
     // Prevent the form from submitting
     e.preventDefault();
 
     // Get form fields we need to get data from
-    let inputTitle = document.getElementById("mySelect");
+    let inputBookID = document.getElementById("mySelect");  // Ensure this contains bookID
     let inputGenre = document.getElementById("input-genre-update");
 
     // Get the values from the form fields
-    let titleValue = inputTitle.value;
-    let genreValue = inputGenre.value;
-    
-    // currently the database table for bsg_people does not allow updating values to NULL
-    // so we must abort if being bassed NULL for homeworld
+    let bookIDValue = parseInt(inputBookID.value);  // Convert to number
+    let genreValue = parseInt(inputGenre.value);    // Convert to number
 
-    if (isNaN(genreValue)) 
-    {
+    // Ensure values are valid
+    if (isNaN(bookIDValue) || isNaN(genreValue)) {
+        console.error("Invalid input: bookID or genreID is missing or not a number.");
         return;
     }
 
-
-    // Put our data we want to send in a javascript object
+    // Put our data in a JavaScript object
     let data = {
-        title: titleValue,
-        genre: genreValue,
-    }
-    
+        bookID: bookIDValue,
+        genre: genreValue
+    };
+
+    console.log("Sending AJAX request to /put-book-ajax with data:", JSON.stringify(data));
+
     // Setup our AJAX request
     var xhttp = new XMLHttpRequest();
     xhttp.open("PUT", "/put-book-ajax", true);
@@ -38,41 +35,37 @@ updateBookForm.addEventListener("submit", function (e) {
 
     // Tell our AJAX request how to resolve
     xhttp.onreadystatechange = () => {
+        console.log("AJAX ReadyState:", xhttp.readyState, "Status:", xhttp.status);
+
         if (xhttp.readyState == 4 && xhttp.status == 200) {
-
-            // Add the new data to the table
-            updateRow(xhttp.response, titleValue);
-
+            console.log("Server Response:", xhttp.responseText);
+            updateRow(JSON.parse(xhttp.responseText), bookIDValue);
+        } else if (xhttp.readyState == 4) {
+            console.error("Error updating book. Response:", xhttp.responseText);
         }
-        else if (xhttp.readyState == 4 && xhttp.status != 200) {
-            console.log("There was an error with the input.")
-        }
-    }
+    };
 
-    // Send the request and wait for the response
+    // Send the request
     xhttp.send(JSON.stringify(data));
+});
 
-})
+// Function to update the table row after update
+function updateRow(updatedBook, bookID) {
+    console.log("Updating row for bookID:", bookID, "New Data:", updatedBook);
 
-
-function updateRow(data, bookID){
-    let parsedData = JSON.parse(data);
-    
-    let table = document.getElementById("people-table");
+    let table = document.getElementById("book-table");
 
     for (let i = 0, row; row = table.rows[i]; i++) {
-       //iterate through rows
-       //rows would be accessed using the "row" variable assigned in the for loop
-       if (table.rows[i].getAttribute("data-value") == bookID) {
-
-            // Get the location of the row where we found the matching person ID
+        if (table.rows[i].getAttribute("id") === `row-${bookID}`) {  
             let updateRowIndex = table.getElementsByTagName("tr")[i];
 
-            // Get td of homeworld value
-            let td = updateRowIndex.getElementsByTagName("td")[3];
+            // Find the correct <td> for genre
+            let genreCell = updateRowIndex.getElementsByTagName("td")[3];  
 
-            // Reassign homeworld to our value we updated to
-            td.innerHTML = parsedData[0].name; // ######################################
-       }
+            // Update Genre Name
+            genreCell.innerHTML = updatedBook.genreName;
+
+            console.log("Updated row successfully.");
+        }
     }
 }

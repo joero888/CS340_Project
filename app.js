@@ -1,223 +1,205 @@
-// App.js
-
 /*
     SETUP
 */
-var express = require('express');   // We are using the express library for the web server
-var app     = express();            // We need to instantiate an express object to interact with the server in our code
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
-app.use(express.static('public'))
+var express = require('express');   
+var app = express();            
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
-PORT        = 64423;                 // Set a port number at the top so it's easy to change in the future
+PORT = 64423;
 
 // Database
-var db = require('./database/db-connector')
+var db = require('./database/db-connector');
 
 const { engine } = require('express-handlebars');
-var exphbs = require('express-handlebars');     // Import express-handlebars
-const { debugPort } = require('process');
-app.engine('.hbs', engine({extname: ".hbs"}));  // Create an instance of the handlebars engine to process templates
-app.set('view engine', '.hbs');                 // Tell express to use the handlebars engine whenever it encounters a *.hbs file.
+app.engine('.hbs', engine({ extname: ".hbs" }));  
+app.set('view engine', '.hbs');                
 
 /*
     ROUTES
 */
 
-app.get('/', function(req, res)
-{  
-  let query1;
-  
-  if (req.query.title == undefined) {
-    if (req.query.isbn == undefined) {
-      query1 = "SELECT * FROM Books;";                    // Define our queries 
-    }
-    else {
-      query1 = `SELECT * FROM Books WHERE isbn LIKE "${req.query.isbn}";`;
-    }
-  }
-  else if (req.query.isbn == undefined) {
-    if (req.query.title == undefined) {
-      query1 = "SELECT * FROM Books;"; 
-    }
-    else {
-      `SELECT * FROM Books WHERE title LIKE "${req.query.title}";`;
-    }
-  }
-  else {
-    query1 = `SELECT * FROM Books WHERE (title LIKE "${req.query.title}") AND (isbn LIKE "${req.query.isbn}");`;
-  }
 
-  let query2 = "SELECT * FROM Genres;";                   
-
-  db.pool.query(query1, function(error, rows, fields){    // Execute the query
-
-    let books = rows;
-
-    db.pool.query(query2, (error, rows, fields) => {
-      let genres = rows;
-
-      let genremap = {}
-      genres.map(genreID => {
-        let id = parseInt(genreID.genreID, 10);
-
-        genremap[id] = genreID["genreName"];
-      })
-
-      books = books.map(book => {
-        return Object.assign(book, {genreID: genremap[book.genreID]})
-      })
-
-      return res.render('index', {data: books, genres: genres});
-    })
-  })                                                      
-});                                                         // received back from the query
-
-app.post('/add-book-ajax', function(req, res) 
-{
-  // Capture the incoming data and parse it back to a JS object
-  let data = req.body;
-
-  // Capture NULL values
-  let genreID = parseInt(data.genreID);
-  if (isNaN(genreID))
-  {
-      genreID = 'NULL'
-  }
-
-  let status = parseInt(data.status);
-  if (isNaN(status))
-  {
-      status = 'NULL'
-  }
-
-  // Create the query and run it on the database
-  query1 = `INSERT INTO Books (ISBN, title, genreID, status) VALUES ('${data.ISBN}', '${data.title}', ${genreID}, ${status})`;
-  db.pool.query(query1, function(error, rows, fields){
-
-    // Check to see if there was an error
-    if (error) {
-
-      // Log the error to the terminal so we know what went wrong, and send the visitor an HTTP response 400 indicating it was a bad request.
-      console.log(error)
-      res.sendStatus(400);
-    }
-    else
-    {
-      // If there was no error, perform a SELECT * on bsg_people
-      query2 = `SELECT * FROM Books;`;
-      db.pool.query(query2, function(error, rows, fields){
-
-        let books = rows;
-
-          // If there was an error on the second query, send a 400
-        if (error) {
-            
-          // Log the error to the terminal so we know what went wrong, and send the visitor an HTTP response 400 indicating it was a bad request.
-          console.log(error);
-          res.sendStatus(400);
-        }
-        // If all went well, send the results of the query back.
-        else
-        {
-          query3 = `SELECT * FROM Genres;`;
-          db.pool.query(query3, function(error, rows, fields){
-
-            let genres = rows;
-
-            let genremap = {}
-            genres.map(genreID => {
-              let id = parseInt(genreID.genreID, 10);
-
-              genremap[id] = genreID["genreName"];
-            })
-
-            books = books.map(book => {
-              return Object.assign(book, {genreID: genremap[book.genreID]})
-            })
-          })
-
-          res.send(books);
-        }
-      })
-    }
-  })
+app.get('/', (req, res) => {
+    res.render('index');  
 });
 
-app.put('/put-book-ajax', function(req,res,next){
-  let data = req.body;
+// READ Books
+app.get('/books', function(req, res) {  
+  let query1 = `
+      SELECT Books.bookID, Books.ISBN, Books.title, Books.status, Genres.genreName 
+      FROM Books 
+      LEFT JOIN Genres ON Books.genreID = Genres.genreID;
+  `;
 
-  let genre = parseInt(data.genre);
-  let title = parseInt(data.title);
+  db.pool.query(query1, function(error, books) {    
+      if (error) {
+          console.error("Database query error:", error);
+          return res.sendStatus(500);
+      }
 
-  let queryUpdateGenre = `UPDATE Books SET genreID = ? WHERE Books.bookID = ?`;
-  let selectGenre = `SELECT * FROM Genres WHERE genreID = ?`
+      console.log("Books Data Retrieved:", books);  // Log the books data
 
-        // Run the 1st query
-        db.pool.query(queryUpdateGenre, [genre, title], function(error, rows, fields){
-            if (error) {
+      let query2 = "SELECT * FROM Genres;"; 
 
-            // Log the error to the terminal so we know what went wrong, and send the visitor an HTTP response 400 indicating it was a bad request.
-            console.log(error);
-            res.sendStatus(400);
-            }
+      db.pool.query(query2, function(error, genres) {
+          if (error) {
+              console.error("Database query error:", error);
+              return res.sendStatus(500);
+          }
 
-            // If there was no error, we run our second query and return that data so we can use it to update the people's
-            // table on the front-end
-            else
-            {
-                // Run the second query
-                db.pool.query(selectGenre, [genre], function(error, rows, fields) {
+          console.log("Genres Data Retrieved:", genres);  // Log the genres data
+          return res.render('books', { data: books, genres: genres });
+      });
+  });
+});
 
-                    if (error) {
-                        console.log(error);
-                        res.sendStatus(400);
-                    } else {
-                        res.send(rows);
-                    }
-                })
-            }
-})});
 
-app.delete('/delete-book-ajax', function(req, res, next){ // figure out how to get the page to update automatically without refreshing
-  let data = req.body;
-  let bookID = parseInt(data.id);
-  let deleteBook= `DELETE FROM Books WHERE bookID = ?`;
-  let deleteBookLoans =  `DELETE FROM BookLoans WHERE bookID = ?`;
-  let deleteBookAuthors = `DELETE FROM BookAuthors WHERE bookID = ?`;
+// CREATE Book
+app.post('/add-book-ajax', function(req, res) {
+    let data = req.body;
 
-  // Run the 1st query
-  db.pool.query(deleteBook, [bookID], function(error, rows, fields){
-    if (error) {
+    let genreID = parseInt(data.genreID);
+    if (isNaN(genreID)) genreID = null;
 
-    // Log the error to the terminal so we know what went wrong, and send the visitor an HTTP response 400 indicating it was a bad request.
-    console.log(error);
-    res.sendStatus(400);
-    }
-    else {
-      db.pool.query(deleteBookLoans, [bookID], function(error, rows, fields) {
+    let status = parseInt(data.status);
+    if (isNaN(status)) status = null;
+
+    let query = `INSERT INTO Books (ISBN, title, genreID, status) VALUES (?, ?, ?, ?)`;
+    db.pool.query(query, [data.ISBN, data.title, genreID, status], function(error, result) {
         if (error) {
-          console.log(error);
-          res.sendStatus(400);
+            console.error(error);
+            return res.sendStatus(400);
         }
-        else {
-          db.pool.query(deleteBookAuthors, [bookID], function(error, rows, fields) {
+
+        let selectQuery = `SELECT * FROM Books WHERE bookID = ?;`;
+        db.pool.query(selectQuery, [result.insertId], function(error, rows) {
             if (error) {
-              console.log(error);
-              res.sendStatus(400);
+                console.error(error);
+                return res.sendStatus(400);
             }
-            else {
-              res.sendStatus(204);
-            }
-          })
-        }
-      })
+            res.json(rows[0]);
+        });
+    });
+});
+
+// UPDATE Book
+app.put('/put-book-ajax', function(req, res) {
+    let data = req.body;
+    let bookID = parseInt(data.bookID);
+    let genreID = parseInt(data.genre);
+
+    if (isNaN(bookID) || isNaN(genreID)) {
+        return res.status(400).json({ error: "Invalid bookID or genreID" });
     }
-})});
+
+    let queryUpdateGenre = `UPDATE Books SET genreID = ? WHERE Books.bookID = ?`;
+    let selectUpdatedBook = `
+        SELECT Books.bookID, Books.ISBN, Books.title, Books.status, Genres.genreName 
+        FROM Books 
+        LEFT JOIN Genres ON Books.genreID = Genres.genreID 
+        WHERE Books.bookID = ?;
+    `;
+
+    db.pool.query(queryUpdateGenre, [genreID, bookID], function(error) {
+        if (error) {
+            console.error("Update error:", error);
+            return res.sendStatus(400);
+        }
+
+        db.pool.query(selectUpdatedBook, [bookID], function(error, rows) {
+            if (error) {
+                console.error("Select updated book error:", error);
+                return res.sendStatus(400);
+            }
+            res.json(rows[0]);  // Send the updated row
+        });
+    });
+});
+
+// DELETE Book
+app.delete('/delete-book-ajax', function(req, res) {
+    let data = req.body;
+    let bookID = parseInt(data.id);
+
+    if (isNaN(bookID)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    let query = `DELETE FROM Books WHERE bookID = ?`;
+
+    db.pool.query(query, [bookID], function(error, result) {
+        if (error) {
+            console.error(error);
+            return res.sendStatus(400);
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Book not found" });
+        }
+
+        res.sendStatus(204);
+    });
+});
+
+
+// READ Genres
+app.get('/genres', function(req, res) {
+    let query = "SELECT * FROM Genres;";  // Query to get all genres
+
+    db.pool.query(query, function(error, genres) {
+        if (error) {
+            console.error("Database query error:", error);
+            return res.sendStatus(500);
+        }
+
+        console.log("Genres Data Retrieved:", genres);  // Log retrieved genres
+        return res.render('genres', { data: genres });  // Render genres.hbs
+    });
+});
+
+// Create Genre
+app.post('/add-genre-ajax', function(req, res) {
+    let data = req.body;
+
+    let query = `INSERT INTO Genres (genreName) VALUES (?)`;
+    db.pool.query(query, [data.genreName], function(error, result) {
+        if (error) {
+            console.error(error);
+            return res.sendStatus(400);
+        }
+
+        // Fetch the newly inserted genre
+        let selectQuery = `SELECT * FROM Genres WHERE genreID = ?;`;
+        db.pool.query(selectQuery, [result.insertId], function(error, rows) {
+            if (error) {
+                console.error(error);
+                return res.sendStatus(400);
+            }
+            res.json(rows[0]); // Send the newly added genre back to the frontend
+        });
+    });
+});
+
+
+app.delete('/delete-genre/:id', async (req, res) => {
+    const genreID = req.params.id;
+
+    try {
+        await db.pool.query("DELETE FROM Genres WHERE genreID = ?", [genreID]);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("Error deleting genre:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
 
 /*
     LISTENER
 */
-app.listen(PORT, function(){            // This is the basic syntax for what is called the 'listener' which receives incoming requests on the specified PORT.
+app.listen(PORT, function() {            
     console.log('Express started on http://localhost:' + PORT + '; press Ctrl-C to terminate.')
 });

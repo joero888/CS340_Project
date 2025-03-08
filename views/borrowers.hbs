@@ -1,0 +1,42 @@
+<nav>
+    <a href="/">MAIN</a>
+    <a href="/books">BOOKS</a> 
+    <a href="/genres">GENRES</a> |
+    <a href="/authors">AUTHORS</a> |
+    <a href="/borrowers">BORROWERS</a> |
+    <a href="/loans">LOANS</a>
+</nav>
+
+<h1>Manage Genres</h1>
+
+<!-- Table to Display Genres -->
+<table>
+    <thead>
+        <tr>
+            <th>Genre ID</th>
+            <th>Genre Name</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each data}}
+        <tr id="row-{{this.genreID}}">
+            <td>{{this.genreID}}</td>
+            <td>{{this.genreName}}</td>
+            <td>
+                <button class="delete-button" data-genreid="{{this.genreID}}">Delete</button>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<!-- Form to Add a New Genre -->
+<h2>Add a New Genre</h2>
+<form id="add-genre-form">
+    <label>Genre Name:</label>
+    <input type="text" name="genreName" required>
+    <input type="submit" value="Submit">
+</form>
+
+<script src="./js/genres.js"></script>

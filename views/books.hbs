@@ -1,0 +1,118 @@
+
+
+<nav>
+    <a href="/">MAIN</a>
+    <a href="/books">BOOKS</a> 
+    <a href="/genres">GENRES</a> |
+    <a href="/authors">AUTHORS</a> |
+    <a href="/borrowers">BORROWERS</a> |
+    <a href="/loans">LOANS</a>
+</nav>
+
+
+{{!-- Create a table --}}
+<table id="book-table">
+
+    {{!-- Header section --}}
+    <thead>
+
+        {{!-- For just the first row, we print each key of the row object as a header cell so we
+        know what each column means when the page renders --}}
+        <tr>
+            {{#each data.[0]}}
+            <th>
+                {{@key}}
+            </th>
+            {{/each}}
+            <th>delete</th>
+        </tr>
+    </thead>
+
+    {{!-- Body section --}}
+    <tbody>
+
+        {{!-- For each row, print the id, fname, lname, homeworld and age, in order --}}
+        {{#each data}}
+        <tr id="row-{{this.bookID}}" data-value="{{this.bookID}}">
+            <td>{{this.bookID}}</td>
+            <td>{{this.ISBN}}</td>
+            <td>{{this.title}}</td>
+            <td>{{this.genreName}}</td>
+            <td>{{this.status}}</td>
+            <td><button class="delete-button" data-bookid="{{this.bookID}}">Delete</button></td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+<script src="./js/delete_book.js"></script>
+
+<!-- Form to search for a record using ISBN -->
+<h2>Search Using an HTML Form</h2>
+<p>Search by ISBN or title using the field below.</p>
+<form id="search-book-html" method='GET' action='/'>
+    <label for="input-title">Search by title: </label>
+    <input type="text" name="title" id="input-title-html-search">
+
+    <label for="input-isbn">Search by ISBN: </label>
+    <input type="text" name="isbn" id="input-isbn-html-search">
+    
+    <input type="submit" value="Submit">
+    <a href='/'><button>Reset</button></a>
+</form>
+
+{{!-- Form to add a record to the table  --}}
+<h2>Adding Data with AJAX</h2>
+<p>To add a new book, please enter its information below and click 'Submit'!</p>
+<form id="add-book-form-ajax">
+    <label for="input-isbn">ISBN: </label>
+    <input type="text" name="input-isbn" id="input-isbn">
+    
+    <label for="input-title">Title: </label>
+    <input type="text" name="input-title" id="input-title">
+
+    <label for="input-genreID">Genre ID: </label>
+    {{!-- <input type="number" name="input-genreID" id="input-genreID"> --}}
+    <select name="input-genreID" id="input-genreID-ajax">
+      <option value="">Select a Genre</option>
+      {{#each genres}}
+      <option value="{{this.genreID}}">{{this.genreName}}</option>
+      {{/each}}
+    </select>
+
+    <label for="input-status">Status: </label>
+    <input type="number" name="input-status" id="input-status">
+
+    <input type="submit" value="Submit">
+</form>
+
+{{!-- Embed our javascript to handle the DOM manipulation and AJAX request --}}
+<script src="./js/add_book.js"></script>
+
+<h2>Updating A Book's Genre Form</h2>
+<p>To update a specific book's genre, select its title from the drop-down menu on the left and their genre from the drop down menu on the right</p>
+<form id="update-book-form-ajax">
+
+    <label for="input-title">Title: </label>
+    <select name="input-title" id="mySelect">
+        <option value="test">Select a Book</option>
+        {{#each data}}
+        <option value="{{this.bookID}}">{{this.title}}</option>
+        {{/each}}
+    </select>
+
+    <label for="input-genre">Genre: </label>
+    <select name="input-genre" id="input-genre-update">
+        <option>Select a Genre</option>
+        {{#each genres}}
+        <option value="{{this.genreID}}">{{this.genreName}}</option>
+        {{/each}}
+    </select>
+    <input type="submit" value="Submit">
+
+</form>
+
+<script src="./js/update_book.js"></script>
+
+
+
+
