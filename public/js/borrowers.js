@@ -1,4 +1,4 @@
-console.log("📌 borrowers.js is loaded and running"); // ✅ Ensure script is loaded
+console.log("borrowers.js is loaded and running"); // Ensure script is loaded
 
 // Handle Adding a Borrower
 document.querySelector("#add-borrower-form").addEventListener("submit", async (event) => {
@@ -9,11 +9,11 @@ document.querySelector("#add-borrower-form").addEventListener("submit", async (e
     const borrowerEmail = document.querySelector("input[name='borrowerEmail']").value.trim();
 
     // ✅ Debugging: Log the values before sending
-    console.log("📌 Borrower Form Submitted - Sending Data:", { borrowerName, borrowerEmail });
+    console.log("Borrower Form Submitted - Sending Data:", { borrowerName, borrowerEmail });
 
     // Validate input
     if (!borrowerName || !borrowerEmail) {
-        alert("❌ Borrower name and email cannot be empty!");
+        alert("Borrower name and email cannot be empty!");
         return;
     }
 
@@ -25,11 +25,11 @@ document.querySelector("#add-borrower-form").addEventListener("submit", async (e
             body: JSON.stringify({ borrowerName, borrowerEmail })  
         });
 
-        console.log("📌 Fetch request sent - Waiting for response");
+        console.log("Fetch request sent - Waiting for response");
 
         // Get raw response text for debugging
         const responseText = await response.text();
-        console.log("📌 Raw Server Response:", responseText);
+        console.log("Raw Server Response:", responseText);
 
         // Check if request was successful
         if (!response.ok) {
@@ -38,9 +38,9 @@ document.querySelector("#add-borrower-form").addEventListener("submit", async (e
 
         // Parse the response JSON
         const newBorrower = JSON.parse(responseText);
-        console.log("✅ Borrower Added Successfully:", newBorrower);
+        console.log("Borrower Added Successfully:", newBorrower);
 
-        // ✅ Dynamically add the new borrower row to the table
+        // Dynamically add the new borrower row to the table
         const table = document.querySelector("tbody");
         const newRow = document.createElement("tr");
         newRow.id = `row-${newBorrower.borrowerID}`;
@@ -53,7 +53,7 @@ document.querySelector("#add-borrower-form").addEventListener("submit", async (e
 
         table.appendChild(newRow);
 
-        // ✅ Add delete event listener to the new button
+        // Add delete event listener to the new button
         newRow.querySelector(".delete-button").addEventListener("click", async () => {
             await deleteBorrower(newBorrower.borrowerID, newRow);
         });
@@ -61,26 +61,26 @@ document.querySelector("#add-borrower-form").addEventListener("submit", async (e
         // Reset form
         event.target.reset();
     } catch (error) {
-        console.error("❌ Error Adding Borrower:", error);
-        alert("❌ Error adding borrower: " + error.message);
+        console.error("Error Adding Borrower:", error);
+        alert("Error adding borrower: " + error.message);
     }
 });
 
 // ✅ Function to handle borrower deletion
 async function deleteBorrower(borrowerID, rowElement) {
     try {
-        console.log(`📌 Attempting to delete borrower ID: ${borrowerID}`);
+        console.log(`Attempting to delete borrower ID: ${borrowerID}`);
         const response = await fetch(`/delete-borrower/${borrowerID}`, { method: "DELETE" });
 
         if (!response.ok) {
             throw new Error("Failed to delete borrower.");
         }
 
-        console.log(`✅ Borrower ID ${borrowerID} deleted successfully`);
+        console.log(`Borrower ID ${borrowerID} deleted successfully`);
         rowElement.remove();
     } catch (error) {
-        console.error("❌ Error deleting borrower:", error);
-        alert("❌ Error deleting borrower.");
+        console.error("Error deleting borrower:", error);
+        alert("Error deleting borrower.");
     }
 }
 
@@ -91,7 +91,7 @@ document.querySelector("tbody").addEventListener("click", async (event) => {
         const row = document.querySelector(`#row-${borrowerID}`);
 
         if (!row) {
-            console.warn(`❌ Row for borrower ${borrowerID} not found.`);
+            console.warn(`Row for borrower ${borrowerID} not found.`);
             return;
         }
 

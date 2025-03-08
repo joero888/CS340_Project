@@ -305,6 +305,102 @@ app.delete('/delete-borrower/:id', async (req, res) => {
     }
 });
 
+// READ Loans
+app.get('/loans', function(req, res) {
+    let query1 = `
+        SELECT Loans.loanID, Loans.returnDate, Loans.loanDate, 
+               Borrowers.borrowerID, Borrowers.borrowerName 
+        FROM Loans
+        LEFT JOIN Borrowers ON Loans.borrowerID = Borrowers.borrowerID;
+    `;
+
+    db.pool.query(query1, function(error, loans) {
+        if (error) {
+            console.error("❌ Database query error (Loans):", error);
+            return res.sendStatus(500);
+        }
+
+        let query2 = "SELECT borrowerID, borrowerName FROM Borrowers;";  // Fetch borrowers
+
+        db.pool.query(query2, function(error, borrowers) {
+            if (error) {
+                console.error("❌ Database query error (Borrowers):", error);
+                return res.sendStatus(500);
+            }
+
+            console.log("✅ Loans & Borrowers Retrieved:", { loans, borrowers });  // Debugging log
+            return res.render('loans', { data: loans, borrowers: borrowers });
+        });
+    });
+});
+
+
+// Create Loan and Insert into Database
+app.post('/add-loan', function(req, res) {
+    let data = req.body;
+
+    // Validate input
+    if (!data.returnDate || !data.loanDate || !data.borrowerID) {
+        console.error("❌ Missing loan input data:", data);
+        return res.status(400).json({ error: "All fields are required!" });
+    }
+
+    let query = `INSERT INTO Loans (returnDate, loanDate, borrowerID) VALUES (?, ?, ?)`;
+
+    db.pool.query(query, [data.returnDate, data.loanDate, data.borrowerID], function(error, result) {
+        if (error) {
+            console.error("❌ Error inserting loan:", error);
+            return res.status(500).json({ error: "Failed to insert loan" });
+        }
+
+        // ✅ Fetch the newly inserted loan with borrower name
+        let selectQuery = `
+            SELECT Loans.loanID, Loans.returnDate, Loans.loanDate, 
+                   Borrowers.borrowerID, Borrowers.borrowerName 
+            FROM Loans
+            LEFT JOIN Borrowers ON Loans.borrowerID = Borrowers.borrowerID
+            WHERE Loans.loanID = ?;
+        `;
+
+        db.pool.query(selectQuery, [result.insertId], function(error, rows) {
+            if (error) {
+                console.error("❌ Error fetching new loan:", error);
+                return res.status(500).json({ error: "Failed to retrieve new loan" });
+            }
+
+            console.log("✅ Loan Added Successfully:", rows[0]);  // Debugging log
+            res.json(rows[0]); // Send the new loan back to frontend
+        });
+    });
+});
+
+// DELETE Loan
+app.delete('/delete-loan/:id', async (req, res) => {
+    const loanID = req.params.id;
+
+    try {
+        let deleteQuery = "DELETE FROM Loans WHERE loanID = ?";
+        db.pool.query(deleteQuery, [loanID], function(error, result) {
+            if (error) {
+                console.error("❌ Error deleting loan:", error);
+                return res.status(500).json({ error: "Failed to delete loan" });
+            }
+
+            if (result.affectedRows === 0) {
+                console.warn(`❌ Loan ID ${loanID} not found.`);
+                return res.status(404).json({ error: "Loan not found" });
+            }
+
+            console.log(`✅ Loan ID ${loanID} deleted successfully.`);
+            res.sendStatus(204);
+        });
+    } catch (error) {
+        console.error("❌ Unexpected error deleting loan:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
 /*
     LISTENER
 */
